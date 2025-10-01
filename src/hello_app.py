@@ -92,4 +92,3 @@ if __name__ == "__main__":
     # Test direct invocation
     result = lambda_handler({'name': 'DevOps Engineer'}, MockContext())
     print(json.dumps(json.loads(result['body']), indent=2))
-

@@ -1,0 +1,382 @@
+name: Deploy Lambda Service
+
+on:
+  push:
+    branches: [ main, 'feat/ekene/interview/exercise' ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'dev'
+        type: choice
+        options:
+        - dev
+        - staging
+        - prod
+      aws_region:
+        description: 'AWS Region'
+        required: false
+        default: 'us-west-2'
+        type: string
+      project_name:
+        description: 'Project Name'
+        required: false
+        default: 'guild'
+        type: string
+      service_name:
+        description: 'Service Name'
+        required: false
+        default: 'hello-service'
+        type: string
+      aws_access_key_id:
+        description: 'AWS Access Key ID (optional - will use secrets if not provided)'
+        required: false
+        type: string
+      aws_secret_access_key:
+        description: 'AWS Secret Access Key (optional - will use secrets if not provided)'
+        required: false
+        type: string
+      use_aws_role:
+        description: 'Use AWS IAM Role instead of access keys'
+        required: false
+        default: false
+        type: boolean
+      aws_role_arn:
+        description: 'AWS IAM Role ARN (if using role-based authentication)'
+        required: false
+        type: string
+
+env:
+  AWS_REGION: ${{ github.event.inputs.aws_region || 'us-west-2' }}
+  PYTHON_VERSION: '3.11'
+  ENVIRONMENT: ${{ github.event.inputs.environment || 'dev' }}
+  PROJECT_NAME: ${{ github.event.inputs.project_name || 'guild' }}
+  SERVICE_NAME: ${{ github.event.inputs.service_name || 'hello-service' }}
+
+jobs:
+  test:
+    name: Test and Validate
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        
+    - name: Cache pip dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+          
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r src/requirements.txt
+        
+    - name: Run linting
+      run: |
+        flake8 src/ --count --select=E9,F63,F7,F82 --show-source --statistics
+        flake8 src/ --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+        
+    - name: Run type checking
+      run: |
+        mypy src/ --ignore-missing-imports
+        
+    - name: Format check
+      run: |
+        black --check src/
+        
+    - name: Run tests
+      run: |
+        cd src
+        python -m pytest test_validation.py -v --cov=hello_app --cov-report=xml
+        
+    - name: Upload coverage reports
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./src/coverage.xml
+        flags: unittests
+        name: codecov-umbrella
+
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r src/requirements.txt
+        pip install safety bandit
+        
+    - name: Run safety check
+      run: |
+        safety check --json --output safety-report.json || true
+        
+    - name: Run bandit security scan
+      run: |
+        bandit -r src/ -f json -o bandit-report.json || true
+        
+    - name: Upload security reports
+      uses: actions/upload-artifact@v3
+      with:
+        name: security-reports
+        path: |
+          safety-report.json
+          bandit-report.json
+
+  build:
+    name: Build Lambda Package
+    runs-on: ubuntu-latest
+    needs: [test, security-scan]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r src/requirements.txt
+        
+    - name: Create deployment package
+      run: |
+        mkdir -p dist
+        cd src
+        zip -r ../dist/lambda.zip . -x "*.pyc" "__pycache__/*" "test_*.py" "*.md"
+        
+        # Create AIOps forecaster package
+        zip -r ../dist/aiops.zip aiops_forecaster.py -x "*.pyc" "__pycache__/*"
+        
+    - name: Upload Lambda package
+      uses: actions/upload-artifact@v3
+      with:
+        name: lambda-package
+        path: dist/lambda.zip
+
+  deploy:
+    name: Deploy to ${{ env.ENVIRONMENT }}
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/feat/ekene/interview/exercise' || github.event_name == 'workflow_dispatch'
+    
+    environment: ${{ env.ENVIRONMENT }}
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Download Lambda package
+      uses: actions/download-artifact@v3
+      with:
+        name: lambda-package
+        path: dist/
+        
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ github.event.inputs.aws_access_key_id || secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ github.event.inputs.aws_secret_access_key || secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+        role-to-assume: ${{ github.event.inputs.use_aws_role == 'true' && github.event.inputs.aws_role_arn || '' }}
+        
+    - name: Verify AWS credentials
+      run: |
+        echo "Verifying AWS credentials..."
+        aws sts get-caller-identity
+        echo "✅ AWS credentials verified successfully"
+        
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_version: 1.6.0
+        
+    - name: Create Environment Configuration
+      run: |
+        # Create environment directory if it doesn't exist
+        mkdir -p iac/environments/${{ env.ENVIRONMENT }}
+        
+        # Create main.tf for the environment
+        cat > iac/environments/${{ env.ENVIRONMENT }}/main.tf << EOF
+        terraform {
+          required_providers {
+            aws = {
+              source  = "hashicorp/aws"
+              version = "~> 5.0"
+            }
+          }
+        }
+        
+        provider "aws" {
+          region = "${{ env.AWS_REGION }}"
+          
+          default_tags {
+            tags = {
+              Project     = "${{ env.PROJECT_NAME }}"
+              Environment = "${{ env.ENVIRONMENT }}"
+              Service     = "${{ env.SERVICE_NAME }}"
+              ManagedBy   = "terraform"
+              Owner       = "devops-team"
+            }
+          }
+        }
+        
+        data "aws_caller_identity" "current" {}
+        data "aws_region" "current" {}
+        
+        locals {
+          common_tags = {
+            Project     = "${{ env.PROJECT_NAME }}"
+            Environment = "${{ env.ENVIRONMENT }}"
+            Service     = "${{ env.SERVICE_NAME }}"
+            ManagedBy   = "terraform"
+            Owner       = "devops-team"
+          }
+        }
+        
+        module "lambda_service" {
+          source = "../../modules/lambda-service"
+          
+          project_name = "${{ env.PROJECT_NAME }}"
+          environment  = "${{ env.ENVIRONMENT }}"
+          service_name = "${{ env.SERVICE_NAME }}"
+          tags         = local.common_tags
+          
+          lambda_package_path = "../../dist/lambda.zip"
+          lambda_handler      = "hello_app.lambda_handler"
+          lambda_runtime      = "python3.11"
+          lambda_timeout      = 30
+          lambda_memory_size  = 256
+          
+          environment_variables = {
+            ENVIRONMENT      = "${{ env.ENVIRONMENT }}"
+            SERVICE_VERSION  = "1.0.0"
+            LOG_LEVEL        = "INFO"
+            GREETING_MESSAGE = "Hello from ${{ env.ENVIRONMENT }}!"
+          }
+          
+          log_retention_days = 14
+          enable_api_gateway = true
+          api_path          = "hello"
+          api_method        = "POST"
+          api_authorization  = "NONE"
+          enable_encryption = true
+          tracing_mode      = "PassThrough"
+          
+          ssm_parameters = {
+            greeting_message = {
+              name        = "/${{ env.PROJECT_NAME }}/${{ env.SERVICE_NAME }}/message"
+              type        = "String"
+              value       = "Hello from ${{ env.ENVIRONMENT }}!"
+              description = "Greeting message for ${{ env.ENVIRONMENT }} environment"
+              tags        = local.common_tags
+            }
+          }
+          
+          error_threshold = 5
+          alarm_actions   = []
+          ok_actions      = []
+          enable_dashboard = true
+          custom_metrics = {}
+          
+          enable_provisioned_concurrency = false
+          provisioned_concurrency_count  = 1
+          enable_auto_scaling           = false
+          min_provisioned_concurrency   = 1
+          max_provisioned_concurrency   = 10
+          target_utilization           = 0.7
+          scale_out_cooldown           = 300
+          scale_in_cooldown            = 300
+        }
+        EOF
+        
+        # Create outputs.tf for the environment
+        cat > iac/environments/${{ env.ENVIRONMENT }}/outputs.tf << EOF
+        output "lambda_function_name" {
+          description = "Name of the Lambda function"
+          value       = module.lambda_service.lambda_function_name
+        }
+        
+        output "api_gateway_url" {
+          description = "URL of the API Gateway"
+          value       = module.lambda_service.api_gateway_url
+        }
+        
+        output "dashboard_url" {
+          description = "URL of the CloudWatch dashboard"
+          value       = module.lambda_service.dashboard_url
+        }
+        
+        output "service_info" {
+          description = "Service information"
+          value       = module.lambda_service.service_info
+        }
+        EOF
+        
+    - name: Terraform Init
+      run: |
+        cd iac/environments/${{ env.ENVIRONMENT }}
+        terraform init
+        
+    - name: Terraform Plan
+      run: |
+        cd iac/environments/${{ env.ENVIRONMENT }}
+        terraform plan -out=tfplan
+        
+    - name: Terraform Apply
+      run: |
+        cd iac/environments/${{ env.ENVIRONMENT }}
+        terraform apply -auto-approve tfplan
+        
+    - name: Run integration tests
+      run: |
+        # Get the API Gateway URL from Terraform output
+        API_URL=$(cd iac/environments/${{ env.ENVIRONMENT }} && terraform output -raw api_gateway_url)
+        if [ "$API_URL" != "null" ]; then
+          echo "Testing API endpoint: $API_URL"
+          curl -X POST "$API_URL" \
+            -H "Content-Type: application/json" \
+            -d '{"name": "GitHub Actions"}' \
+            --fail --show-error
+        fi
+
+  notify:
+    name: Notify Deployment Status
+    runs-on: ubuntu-latest
+    needs: [deploy]
+    if: always()
+    
+    steps:
+    - name: Notify Success
+      if: ${{ needs.deploy.result == 'success' }}
+      run: |
+        echo "✅ Deployment completed successfully!"
+        
+    - name: Notify Failure
+      if: ${{ needs.deploy.result == 'failure' }}
+      run: |
+        echo "❌ Deployment failed!"
+        exit 1
