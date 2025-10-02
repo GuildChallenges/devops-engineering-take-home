@@ -12,14 +12,14 @@ resource "aws_kms_key" "lambda_key" {
   enable_key_rotation     = true
   
   tags = merge(local.common_tags, {
-    Name = "${local.name_prefix}-kms-key"
+    Name = "${local.name_prefix}-encryption-key"
   })
 }
 
 resource "aws_kms_alias" "lambda_key_alias" {
   count = var.enable_encryption ? 1 : 0
   
-  name          = "alias/${local.name_prefix}-key"
+  name          = "alias/${local.name_prefix}-encryption-key"
   target_key_id = aws_kms_key.lambda_key[0].key_id
   
   lifecycle {
