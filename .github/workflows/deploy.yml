@@ -5,25 +5,25 @@ on:
     branches: [ main, 'feat/ekene/interview/exercise' ]
   pull_request:
     branches: [ main ]
-      workflow_dispatch:
-        inputs:
-          action:
-            description: 'Action to perform'
-            required: true
-            default: 'deploy'
-            type: choice
-            options:
-            - deploy
-            - destroy
-          environment:
-            description: 'Environment to deploy to'
-            required: true
-            default: 'dev'
-            type: choice
-            options:
-            - dev
-            - staging
-            - prod
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'Action to perform'
+        required: true
+        default: 'deploy'
+        type: choice
+        options:
+        - deploy
+        - destroy
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'dev'
+        type: choice
+        options:
+        - dev
+        - staging
+        - prod
       aws_region:
         description: 'AWS Region'
         required: false
