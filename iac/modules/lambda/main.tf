@@ -149,7 +149,7 @@ resource "aws_iam_role_policy_attachment" "lambda_basic_execution" {
 
 # CloudWatch Log Group
 resource "aws_cloudwatch_log_group" "lambda_logs" {
-  name              = "/aws/lambda/${local.name_prefix}"
+  name              = "/aws/lambda/${local.name_prefix}-function"
   retention_in_days = var.log_retention_days
   # Temporarily disable KMS encryption to resolve deployment issues
   # kms_key_id        = var.enable_encryption ? aws_kms_key.lambda_key[0].arn : null
@@ -166,7 +166,7 @@ resource "aws_cloudwatch_log_group" "lambda_logs" {
 # Lambda function
 resource "aws_lambda_function" "main" {
   filename         = var.lambda_package_path
-  function_name    = local.name_prefix
+  function_name    = "${local.name_prefix}-function"
   role            = aws_iam_role.lambda_execution_role.arn
   handler         = var.lambda_handler
   runtime         = var.lambda_runtime
