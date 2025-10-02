@@ -41,6 +41,7 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     logger.info(f"Processing request {request_id}")
     logger.info(f"Event: {json.dumps(event)}")
     logger.info(f"Environment variables: {dict(os.environ)}")
+    logger.info("Lambda function updated with null body handling")
     
     try:
         # Get configurable greeting message
