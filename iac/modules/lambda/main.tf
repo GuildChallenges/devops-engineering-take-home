@@ -271,7 +271,6 @@ resource "aws_api_gateway_deployment" "main" {
   count = var.enable_api_gateway ? 1 : 0
   
   rest_api_id = aws_api_gateway_rest_api.main[0].id
-  stage_name  = var.environment
   
   depends_on = [
     aws_api_gateway_integration.lambda_integration
@@ -280,6 +279,15 @@ resource "aws_api_gateway_deployment" "main" {
   lifecycle {
     create_before_destroy = true
   }
+}
+
+# API Gateway stage
+resource "aws_api_gateway_stage" "main" {
+  count = var.enable_api_gateway ? 1 : 0
+  
+  deployment_id = aws_api_gateway_deployment.main[0].id
+  rest_api_id   = aws_api_gateway_rest_api.main[0].id
+  stage_name    = var.environment
 }
 
 # Lambda permission for API Gateway
