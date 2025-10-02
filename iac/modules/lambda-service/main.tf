@@ -1,14 +1,11 @@
 # Lambda Service Module - Main Configuration
 # This is the main module that can be called from different environments
 
-# Random ID for unique resource names
-resource "random_id" "service_suffix" {
-  byte_length = 4
-}
+# Note: Removed random_id to prevent resource recreation on every run
 
 # Dead Letter Queue
 resource "aws_sqs_queue" "dlq" {
-  name                      = "${local.name_prefix}-dlq-${random_id.service_suffix.hex}"
+  name                      = "${local.name_prefix}-dlq"
   message_retention_seconds = 1209600 # 14 days
   kms_master_key_id         = var.enable_encryption ? aws_kms_key.dlq_key[0].arn : null
   
