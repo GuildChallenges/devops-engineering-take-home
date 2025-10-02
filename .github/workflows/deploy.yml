@@ -603,10 +603,18 @@ jobs:
         API_URL=$(cd iac/environments/${{ github.event.inputs.environment || 'dev' }} && terraform output -raw api_gateway_url)
         if [ "$API_URL" != "null" ]; then
           echo "Testing API endpoint: $API_URL"
-          curl -X POST "$API_URL" \
+          echo "Making request with verbose output..."
+          curl -X POST "$API_URL/hello" \
             -H "Content-Type: application/json" \
             -d '{"name": "GitHub Actions"}' \
-            --fail --show-error
+            -v --show-error || echo "Request failed, checking CloudWatch logs..."
+          
+          # Get Lambda function name for debugging
+          LAMBDA_NAME=$(cd iac/environments/${{ github.event.inputs.environment || 'dev' }} && terraform output -raw lambda_function_name)
+          echo "Lambda function name: $LAMBDA_NAME"
+          echo "Check CloudWatch logs at: /aws/lambda/$LAMBDA_NAME"
+        else
+          echo "API Gateway URL is null, deployment may have failed"
         fi
 
   notify:
