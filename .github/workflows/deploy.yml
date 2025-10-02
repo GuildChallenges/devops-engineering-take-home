@@ -184,6 +184,20 @@ jobs:
         name: lambda-package
         path: dist/
         
+    - name: Verify Lambda package
+      run: |
+        echo "Checking if Lambda package exists..."
+        ls -la dist/
+        if [ -f "dist/lambda.zip" ]; then
+          echo "✅ Lambda package found: dist/lambda.zip"
+          ls -la dist/lambda.zip
+        else
+          echo "❌ Lambda package not found!"
+          echo "Contents of dist/:"
+          ls -la dist/ || echo "dist/ directory does not exist"
+          exit 1
+        fi
+        
     - name: Display deployment inputs
       run: |
         echo " Deployment Configuration:"
