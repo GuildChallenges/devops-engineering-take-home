@@ -5,7 +5,7 @@
 
 # Dead Letter Queue
 resource "aws_sqs_queue" "dlq" {
-  name                      = "${local.name_prefix}-dead-letter-queue"
+  name                      = "${local.name_prefix}-v2-dead-letter-queue"
   message_retention_seconds = 1209600 # 14 days
   kms_master_key_id         = var.enable_encryption ? aws_kms_key.dlq_key[0].arn : null
   

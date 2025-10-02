@@ -19,7 +19,7 @@ resource "aws_kms_key" "lambda_key" {
 resource "aws_kms_alias" "lambda_key_alias" {
   count = var.enable_encryption ? 1 : 0
   
-  name          = "alias/${local.name_prefix}-lambda-encryption-key"
+  name          = "alias/${local.name_prefix}-v2-lambda-encryption-key"
   target_key_id = aws_kms_key.lambda_key[0].key_id
   
   lifecycle {
@@ -71,7 +71,7 @@ resource "aws_kms_key_policy" "lambda_key_policy" {
 
 # IAM role for Lambda execution
 resource "aws_iam_role" "lambda_execution_role" {
-  name = "${local.name_prefix}-lambda-execution-role"
+  name = "${local.name_prefix}-v2-lambda-execution-role"
   
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -95,7 +95,7 @@ resource "aws_iam_role" "lambda_execution_role" {
 
 # IAM policy for Lambda execution
 resource "aws_iam_policy" "lambda_execution_policy" {
-  name        = "${local.name_prefix}-lambda-execution-policy"
+  name        = "${local.name_prefix}-v2-lambda-execution-policy"
   description = "Policy for ${local.name_prefix} Lambda function"
   
   lifecycle {
@@ -149,7 +149,7 @@ resource "aws_iam_role_policy_attachment" "lambda_basic_execution" {
 
 # CloudWatch Log Group
 resource "aws_cloudwatch_log_group" "lambda_logs" {
-  name              = "/aws/lambda/${local.name_prefix}-function"
+  name              = "/aws/lambda/${local.name_prefix}-v2-function"
   retention_in_days = var.log_retention_days
   # Temporarily disable KMS encryption to resolve deployment issues
   # kms_key_id        = var.enable_encryption ? aws_kms_key.lambda_key[0].arn : null
@@ -166,7 +166,7 @@ resource "aws_cloudwatch_log_group" "lambda_logs" {
 # Lambda function
 resource "aws_lambda_function" "main" {
   filename         = var.lambda_package_path
-  function_name    = "${local.name_prefix}-function"
+  function_name    = "${local.name_prefix}-v2-function"
   role            = aws_iam_role.lambda_execution_role.arn
   handler         = var.lambda_handler
   runtime         = var.lambda_runtime
@@ -221,7 +221,7 @@ resource "aws_lambda_function" "main" {
 resource "aws_api_gateway_rest_api" "main" {
   count = var.enable_api_gateway ? 1 : 0
   
-  name        = "${local.name_prefix}-lambda-api"
+  name        = "${local.name_prefix}-v2-lambda-api"
   description = "API Gateway for ${local.name_prefix}"
   
   endpoint_configuration {
