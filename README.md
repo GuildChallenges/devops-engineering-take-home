@@ -58,7 +58,7 @@ The GitHub Actions workflow includes:
 - **Remote State**: S3 bucket with DynamoDB locking
 - **State Persistence**: Infrastructure state survives between deployments
 - **Concurrent Safety**: DynamoDB prevents concurrent modifications
-- **Setup Required**: Run `scripts/setup-backend.sh` to create state infrastructure
+- **Automatic Setup**: Backend infrastructure created automatically during deployment
 
 **Manual Input (for manual deployment):**
 - Use workflow dispatch with credentials as inputs
