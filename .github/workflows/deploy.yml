@@ -366,7 +366,12 @@ jobs:
     - name: Terraform Init
       run: |
         cd iac/environments/${{ github.event.inputs.environment || 'dev' }}
-        terraform init
+        terraform init \
+          -backend-config="bucket=${{ secrets.TERRAFORM_STATE_BUCKET || 'guild-terraform-state' }}" \
+          -backend-config="key=lambda-service/${{ github.event.inputs.environment || 'dev' }}/terraform.tfstate" \
+          -backend-config="region=${{ github.event.inputs.aws_region || 'us-east-1' }}" \
+          -backend-config="dynamodb_table=${{ secrets.TERRAFORM_STATE_DYNAMODB_TABLE || 'terraform-state-lock' }}" \
+          -backend-config="encrypt=true"
         
     - name: Terraform Plan
       run: |
@@ -381,7 +386,7 @@ jobs:
     - name: Run integration tests
       run: |
         # Get the API Gateway URL from Terraform output
-        API_URL=$(cd iac && terraform output -raw api_gateway_url)
+        API_URL=$(cd iac/environments/${{ github.event.inputs.environment || 'dev' }} && terraform output -raw api_gateway_url)
         if [ "$API_URL" != "null" ]; then
           echo "Testing API endpoint: $API_URL"
           curl -X POST "$API_URL" \

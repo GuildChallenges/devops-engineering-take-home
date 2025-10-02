@@ -40,17 +40,25 @@ The GitHub Actions workflow includes:
 
 ### AWS Credentials Setup
 
-**GitHub Secrets (Recommended for automatic deployment):**
+**GitHub Secrets (Required for deployment):**
 1. Go to Repository Settings → Secrets and variables → Actions
 2. Add these secrets:
    - `AWS_ACCESS_KEY_ID`: Your AWS access key
    - `AWS_SECRET_ACCESS_KEY`: Your AWS secret key
+   - `TERRAFORM_STATE_BUCKET`: S3 bucket for Terraform state (run setup script first)
+   - `TERRAFORM_STATE_DYNAMODB_TABLE`: DynamoDB table for state locking
 
 **Default Configuration:**
 - **AWS Region**: `us-east-1`
 - **Environment**: `dev`
 - **Project**: `guild`
 - **Service**: `hello-service`
+
+**Terraform State Management:**
+- **Remote State**: S3 bucket with DynamoDB locking
+- **State Persistence**: Infrastructure state survives between deployments
+- **Concurrent Safety**: DynamoDB prevents concurrent modifications
+- **Setup Required**: Run `scripts/setup-backend.sh` to create state infrastructure
 
 **Manual Input (for manual deployment):**
 - Use workflow dispatch with credentials as inputs
