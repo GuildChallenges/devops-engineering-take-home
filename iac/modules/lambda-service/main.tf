@@ -10,7 +10,7 @@ resource "aws_sqs_queue" "dlq" {
   kms_master_key_id         = var.enable_encryption ? aws_kms_key.dlq_key[0].arn : null
   
   tags = merge(local.common_tags, {
-    Name = "${local.name_prefix}-dlq"
+    Name = "${local.name_prefix}-lambda-dlq"
   })
   
   lifecycle {
@@ -27,7 +27,7 @@ resource "aws_kms_key" "dlq_key" {
   enable_key_rotation     = true
   
   tags = merge(local.common_tags, {
-    Name = "${local.name_prefix}-dlq-key"
+    Name = "${local.name_prefix}-lambda-dlq-key"
   })
 }
 

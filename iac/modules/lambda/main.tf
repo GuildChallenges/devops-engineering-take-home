@@ -12,7 +12,7 @@ resource "aws_kms_key" "lambda_key" {
   enable_key_rotation     = true
   
   tags = merge(local.common_tags, {
-    Name = "${local.name_prefix}-encryption-key"
+    Name = "${local.name_prefix}-lambda-encryption-key"
   })
 }
 
@@ -221,7 +221,7 @@ resource "aws_lambda_function" "main" {
 resource "aws_api_gateway_rest_api" "main" {
   count = var.enable_api_gateway ? 1 : 0
   
-  name        = "${local.name_prefix}-api"
+  name        = "${local.name_prefix}-lambda-api"
   description = "API Gateway for ${local.name_prefix}"
   
   endpoint_configuration {

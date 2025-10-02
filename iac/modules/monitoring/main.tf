@@ -3,7 +3,7 @@
 
 # CloudWatch Alarms
 resource "aws_cloudwatch_metric_alarm" "lambda_errors" {
-  alarm_name          = "${var.function_name}-errors"
+  alarm_name          = "${var.function_name}-lambda-errors"
   comparison_operator = "GreaterThanThreshold"
   evaluation_periods  = var.error_evaluation_periods
   metric_name         = "Errors"
@@ -24,7 +24,7 @@ resource "aws_cloudwatch_metric_alarm" "lambda_errors" {
 }
 
 resource "aws_cloudwatch_metric_alarm" "lambda_duration" {
-  alarm_name          = "${var.function_name}-duration"
+  alarm_name          = "${var.function_name}-lambda-duration"
   comparison_operator = "GreaterThanThreshold"
   evaluation_periods  = var.duration_evaluation_periods
   metric_name         = "Duration"
@@ -47,7 +47,7 @@ resource "aws_cloudwatch_metric_alarm" "lambda_duration" {
 resource "aws_cloudwatch_metric_alarm" "lambda_throttles" {
   count = var.enable_throttle_alarm ? 1 : 0
   
-  alarm_name          = "${var.function_name}-throttles"
+  alarm_name          = "${var.function_name}-lambda-throttles"
   comparison_operator = "GreaterThanThreshold"
   evaluation_periods  = var.throttle_evaluation_periods
   metric_name         = "Throttles"
