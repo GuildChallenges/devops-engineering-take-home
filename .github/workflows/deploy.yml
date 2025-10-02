@@ -523,7 +523,30 @@ jobs:
           echo "❌ Terraform path failed: ../../dist/lambda.zip"
           echo "Contents of ../../dist/:"
           ls -la ../../dist/ || echo "../../dist/ does not exist"
-          exit 1
+          echo "Fixing path resolution by copying lambda.zip to the correct location..."
+          
+          # Go back to root and copy the file to the correct location
+          cd ../../../
+          echo "Current directory after going back: $(pwd)"
+          echo "Contents of dist/:"
+          ls -la dist/ || echo "dist/ directory does not exist"
+          
+          # Create the dist directory in the correct location for Terraform
+          mkdir -p ../../dist/
+          cp dist/lambda.zip ../../dist/lambda.zip
+          echo "Copied lambda.zip to ../../dist/lambda.zip"
+          ls -la ../../dist/lambda.zip
+          
+          # Go back to Terraform directory and verify
+          cd iac/environments/dev/
+          echo "Verifying fix from Terraform directory:"
+          if [ -f "../../dist/lambda.zip" ]; then
+            echo "✅ Terraform path now works: ../../dist/lambda.zip"
+            ls -la ../../dist/lambda.zip
+          else
+            echo "❌ Still failed after copy attempt"
+            exit 1
+          fi
         fi
 
     - name: Terraform Init
