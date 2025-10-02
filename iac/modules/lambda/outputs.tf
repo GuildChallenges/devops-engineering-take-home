@@ -24,7 +24,7 @@ output "lambda_function_version" {
 # API Gateway
 output "api_gateway_url" {
   description = "URL of the API Gateway"
-  value       = var.enable_api_gateway ? "https://${aws_api_gateway_rest_api.main[0].id}.execute-api.${data.aws_region.current.name}.amazonaws.com/${var.environment}" : null
+  value       = var.enable_api_gateway ? "https://${aws_api_gateway_rest_api.main[0].id}.execute-api.${data.aws_region.current.name}.amazonaws.com/${var.environment}/${var.api_path}" : null
 }
 
 output "api_gateway_id" {

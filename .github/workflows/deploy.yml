@@ -604,7 +604,7 @@ jobs:
         if [ "$API_URL" != "null" ]; then
           echo "Testing API endpoint: $API_URL"
           echo "Making request with verbose output..."
-          curl -X POST "$API_URL/hello" \
+          curl -X POST "$API_URL" \
             -H "Content-Type: application/json" \
             -d '{"name": "GitHub Actions"}' \
             -v --show-error || echo "Request failed, checking CloudWatch logs..."
