@@ -365,11 +365,15 @@ jobs:
         
     - name: Setup Terraform Backend (if needed)
       run: |
-        BUCKET_NAME="${{ secrets.TERRAFORM_STATE_BUCKET || 'guild-terraform-state' }}"
+        # Generate unique bucket name if not provided
+        UNIQUE_SUFFIX="${{ github.run_id }}"
+        DEFAULT_BUCKET="guild-terraform-state-$UNIQUE_SUFFIX"
+        BUCKET_NAME="${{ secrets.TERRAFORM_STATE_BUCKET || DEFAULT_BUCKET }}"
         TABLE_NAME="${{ secrets.TERRAFORM_STATE_DYNAMODB_TABLE || 'terraform-state-lock' }}"
         REGION="${{ github.event.inputs.aws_region || 'us-east-1' }}"
         
         echo "Setting up Terraform backend infrastructure..."
+        echo "Using bucket: $BUCKET_NAME"
         
         # Create S3 bucket if it doesn't exist
         if ! aws s3 ls s3://$BUCKET_NAME 2>/dev/null; then
@@ -424,8 +428,14 @@ jobs:
     - name: Terraform Init
       run: |
         cd iac/environments/${{ github.event.inputs.environment || 'dev' }}
+        
+        # Use the same bucket name that was created in the previous step
+        UNIQUE_SUFFIX="${{ github.run_id }}"
+        DEFAULT_BUCKET="guild-terraform-state-$UNIQUE_SUFFIX"
+        BUCKET_NAME="${{ secrets.TERRAFORM_STATE_BUCKET || DEFAULT_BUCKET }}"
+        
         terraform init \
-          -backend-config="bucket=${{ secrets.TERRAFORM_STATE_BUCKET || 'guild-terraform-state' }}" \
+          -backend-config="bucket=$BUCKET_NAME" \
           -backend-config="key=lambda-service/${{ github.event.inputs.environment || 'dev' }}/terraform.tfstate" \
           -backend-config="region=${{ github.event.inputs.aws_region || 'us-east-1' }}" \
           -backend-config="dynamodb_table=${{ secrets.TERRAFORM_STATE_DYNAMODB_TABLE || 'terraform-state-lock' }}" \
