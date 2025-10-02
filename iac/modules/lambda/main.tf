@@ -122,7 +122,7 @@ resource "aws_iam_policy" "lambda_execution_policy" {
         Action = [
           "sqs:SendMessage"
         ]
-        Resource = var.dlq_arn != null ? [var.dlq_arn] : []
+        Resource = var.dead_letter_queue_arn != null ? [var.dead_letter_queue_arn] : []
       },
       {
         Effect = "Allow"
