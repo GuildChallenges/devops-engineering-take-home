@@ -2,9 +2,9 @@
 
 A production-ready deployment pattern for AWS Lambda with IaC, CI/CD, and operational best practices.
 
-## 🚀 Deployment Status
+## Deployment Status
 
-**✅ SUCCESSFULLY DEPLOYED!**
+**SUCCESSFULLY DEPLOYED**
 
 - **Environment**: Development (`dev`)
 - **AWS Region**: `us-east-1`
@@ -12,7 +12,7 @@ A production-ready deployment pattern for AWS Lambda with IaC, CI/CD, and operat
 - **Resources Created**: 24 AWS resources
 - **Status**: Ready for testing and production use
 
-## 🧪 Testing the Service
+## Testing the Service
 
 ### API Endpoint Testing
 
@@ -107,7 +107,7 @@ The GitHub Actions workflow includes:
 **IAM Role:**
 - Use OIDC authentication with AWS IAM roles
 
-## ✅ Implemented Features
+## Implemented Features
 
 ### Core Infrastructure
 - **AWS Lambda Function** with Python 3.11 runtime
