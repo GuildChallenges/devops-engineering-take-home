@@ -89,7 +89,7 @@ resource "aws_cloudwatch_log_metric_filter" "custom_metrics" {
   
   name           = "${var.function_name}-${each.key}"
   log_group_name = var.log_group_name
-  filter_pattern = each.value.filter_pattern
+  pattern        = each.value.filter_pattern
   
   metric_transformation {
     name      = each.value.metric_name
@@ -143,8 +143,6 @@ resource "aws_cloudwatch_dashboard" "main" {
       }
     ]
   })
-  
-  tags = local.common_tags
 }
 
 # Data sources

@@ -16,6 +16,11 @@ output "lambda_function_invoke_arn" {
   value       = aws_lambda_function.main.invoke_arn
 }
 
+output "lambda_function_version" {
+  description = "Version of the Lambda function"
+  value       = aws_lambda_function.main.version
+}
+
 # API Gateway
 output "api_gateway_url" {
   description = "URL of the API Gateway"

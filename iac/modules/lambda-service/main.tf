@@ -141,8 +141,8 @@ resource "aws_lambda_provisioned_concurrency_config" "main" {
   count = var.enable_provisioned_concurrency ? 1 : 0
   
   function_name                     = module.lambda.lambda_function_name
-  provisioned_concurrency_config_name = "${local.name_prefix}-provisioned"
-  provisioned_concurrency_count     = var.provisioned_concurrency_count
+  qualifier                        = module.lambda.lambda_function_version
+  provisioned_concurrent_executions = var.provisioned_concurrency_count
 }
 
 # Application Auto Scaling for Provisioned Concurrency (optional)
