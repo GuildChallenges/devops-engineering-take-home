@@ -183,6 +183,7 @@ jobs:
       with:
         name: lambda-package
         path: dist/
+      continue-on-error: false
         
     - name: Debug artifact download
       run: |
@@ -193,6 +194,15 @@ jobs:
         ls -la dist/ || echo "dist/ directory does not exist"
         echo "Looking for lambda.zip:"
         find . -name "lambda.zip" -type f 2>/dev/null || echo "lambda.zip not found"
+        echo "Checking if artifact download worked..."
+        if [ -f "dist/lambda.zip" ]; then
+          echo "✅ Artifact download successful!"
+          ls -la dist/lambda.zip
+        else
+          echo "❌ Artifact download failed!"
+          echo "Available artifacts:"
+          ls -la dist/ || echo "No dist/ directory"
+        fi
         
     - name: Verify Lambda package
       run: |
