@@ -532,20 +532,43 @@ jobs:
           ls -la dist/ || echo "dist/ directory does not exist"
           
           # Create the dist directory in the correct location for Terraform
-          mkdir -p ../../dist/
-          cp dist/lambda.zip ../../dist/lambda.zip
-          echo "Copied lambda.zip to ../../dist/lambda.zip"
-          ls -la ../../dist/lambda.zip
+          # From root, we need to create dist/ in the root (not ../../dist/)
+          mkdir -p dist/
+          # The file is already in dist/lambda.zip, so we just need to ensure it's accessible
+          echo "Lambda package is already in the correct location: dist/lambda.zip"
+          ls -la dist/lambda.zip
           
           # Go back to Terraform directory and verify
           cd iac/environments/dev/
           echo "Verifying fix from Terraform directory:"
+          echo "Current directory: $(pwd)"
+          echo "Absolute path we're looking for: $(realpath ../../dist/lambda.zip 2>/dev/null || echo 'Path does not exist')"
+          echo "Contents of ../../:"
+          ls -la ../../ || echo "../../ does not exist"
+          echo "Contents of ../../dist/:"
+          ls -la ../../dist/ || echo "../../dist/ does not exist"
           if [ -f "../../dist/lambda.zip" ]; then
             echo "✅ Terraform path now works: ../../dist/lambda.zip"
             ls -la ../../dist/lambda.zip
           else
             echo "❌ Still failed after copy attempt"
-            exit 1
+            echo "Let's try a different approach - copy the file to the exact path Terraform expects"
+            cd ../../../
+            echo "Back in root directory: $(pwd)"
+            echo "Creating the exact directory structure Terraform expects..."
+            mkdir -p iac/environments/dev/../../dist/
+            cp dist/lambda.zip iac/environments/dev/../../dist/lambda.zip
+            echo "Copied to: iac/environments/dev/../../dist/lambda.zip"
+            ls -la iac/environments/dev/../../dist/lambda.zip
+            cd iac/environments/dev/
+            echo "Final verification from Terraform directory:"
+            if [ -f "../../dist/lambda.zip" ]; then
+              echo "✅ Terraform path now works: ../../dist/lambda.zip"
+              ls -la ../../dist/lambda.zip
+            else
+              echo "❌ Still failed - this is a path resolution issue"
+              exit 1
+            fi
           fi
         fi
 
