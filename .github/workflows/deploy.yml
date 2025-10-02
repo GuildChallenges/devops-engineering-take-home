@@ -365,10 +365,8 @@ jobs:
         
     - name: Setup Terraform Backend (if needed)
       run: |
-        # Generate unique bucket name if not provided
-        UNIQUE_SUFFIX="${{ github.run_id }}"
-        DEFAULT_BUCKET="guild-terraform-state-$UNIQUE_SUFFIX"
-        BUCKET_NAME="${{ secrets.TERRAFORM_STATE_BUCKET || DEFAULT_BUCKET }}"
+        # Use provided bucket name or create a persistent one
+        BUCKET_NAME="${{ secrets.TERRAFORM_STATE_BUCKET || 'guild-terraform-state-persistent' }}"
         TABLE_NAME="${{ secrets.TERRAFORM_STATE_DYNAMODB_TABLE || 'terraform-state-lock' }}"
         REGION="${{ github.event.inputs.aws_region || 'us-east-1' }}"
         
@@ -378,7 +376,18 @@ jobs:
         # Create S3 bucket if it doesn't exist
         if ! aws s3 ls s3://$BUCKET_NAME 2>/dev/null; then
           echo "Creating S3 bucket: $BUCKET_NAME"
-          aws s3 mb s3://$BUCKET_NAME --region $REGION
+          
+          # Try to create bucket, if it fails due to name conflict, try with suffix
+          if ! aws s3 mb s3://$BUCKET_NAME --region $REGION 2>/dev/null; then
+            echo "Bucket name conflict, trying with suffix..."
+            SUFFIX=$(date +%s | tail -c 6)
+            BUCKET_NAME="${BUCKET_NAME}-${SUFFIX}"
+            echo "Using bucket: $BUCKET_NAME"
+            aws s3 mb s3://$BUCKET_NAME --region $REGION
+          fi
+          
+          # Store the final bucket name for later steps
+          echo "TERRAFORM_BUCKET_NAME=$BUCKET_NAME" >> $GITHUB_ENV
           
           echo "Enabling versioning..."
           aws s3api put-bucket-versioning \
@@ -407,6 +416,9 @@ jobs:
           echo "S3 bucket $BUCKET_NAME already exists"
         fi
         
+        # Always set the bucket name for later steps
+        echo "TERRAFORM_BUCKET_NAME=$BUCKET_NAME" >> $GITHUB_ENV
+        
         # Create DynamoDB table if it doesn't exist
         if ! aws dynamodb describe-table --table-name $TABLE_NAME --region $REGION 2>/dev/null; then
           echo "Creating DynamoDB table: $TABLE_NAME"
@@ -429,10 +441,9 @@ jobs:
       run: |
         cd iac/environments/${{ github.event.inputs.environment || 'dev' }}
         
-        # Use the same bucket name that was created in the previous step
-        UNIQUE_SUFFIX="${{ github.run_id }}"
-        DEFAULT_BUCKET="guild-terraform-state-$UNIQUE_SUFFIX"
-        BUCKET_NAME="${{ secrets.TERRAFORM_STATE_BUCKET || DEFAULT_BUCKET }}"
+        # Use the bucket name from the setup step or fallback to secret/default
+        BUCKET_NAME="${{ env.TERRAFORM_BUCKET_NAME || secrets.TERRAFORM_STATE_BUCKET || 'guild-terraform-state-persistent' }}"
+        echo "Using bucket: $BUCKET_NAME"
         
         terraform init \
           -backend-config="bucket=$BUCKET_NAME" \
