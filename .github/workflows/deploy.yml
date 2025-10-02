@@ -184,7 +184,28 @@ jobs:
         name: lambda-package
         path: dist/
         
+    - name: Display deployment inputs
+      run: |
+        echo "🚀 Deployment Configuration:"
+        echo "Environment: ${{ github.event.inputs.environment || 'dev' }}"
+        echo "AWS Region: ${{ github.event.inputs.aws_region || 'us-west-2' }}"
+        echo "Project Name: ${{ github.event.inputs.project_name || 'guild' }}"
+        echo "Service Name: ${{ github.event.inputs.service_name || 'hello-service' }}"
+        echo "AWS Access Key ID: ${{ github.event.inputs.aws_access_key_id != '' && '***PROVIDED***' || 'NOT PROVIDED' }}"
+        echo "AWS Secret Access Key: ${{ github.event.inputs.aws_secret_access_key != '' && '***PROVIDED***' || 'NOT PROVIDED' }}"
+        echo "Use AWS Role: ${{ github.event.inputs.use_aws_role || 'false' }}"
+        echo "AWS Role ARN: ${{ github.event.inputs.aws_role_arn || 'NOT PROVIDED' }}"
+        
+    - name: Check AWS credentials
+      run: |
+        if [ -z "${{ github.event.inputs.aws_access_key_id }}" ] && [ -z "${{ secrets.AWS_ACCESS_KEY_ID }}" ]; then
+          echo "❌ No AWS credentials found!"
+          echo "Please provide AWS credentials in the workflow inputs or set GitHub Secrets"
+          exit 1
+        fi
+        
     - name: Configure AWS credentials
+      if: secrets.AWS_ACCESS_KEY_ID != '' || github.event.inputs.aws_access_key_id != ''
       uses: aws-actions/configure-aws-credentials@v4
       with:
         aws-access-key-id: ${{ github.event.inputs.aws_access_key_id || secrets.AWS_ACCESS_KEY_ID }}
