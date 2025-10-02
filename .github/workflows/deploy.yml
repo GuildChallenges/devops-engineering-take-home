@@ -159,8 +159,6 @@ jobs:
         cd src
         zip -r ../dist/lambda.zip . -x "*.pyc" "__pycache__/*" "test_*.py" "*.md"
         
-        # Create AIOps forecaster package
-        zip -r ../dist/aiops.zip aiops_forecaster.py -x "*.pyc" "__pycache__/*"
         
     - name: Upload Lambda package
       uses: actions/upload-artifact@v4
