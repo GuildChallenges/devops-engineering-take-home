@@ -184,6 +184,16 @@ jobs:
         name: lambda-package
         path: dist/
         
+    - name: Debug artifact download
+      run: |
+        echo "Current working directory: $(pwd)"
+        echo "Contents of current directory:"
+        ls -la
+        echo "Contents of dist/ directory:"
+        ls -la dist/ || echo "dist/ directory does not exist"
+        echo "Looking for lambda.zip:"
+        find . -name "lambda.zip" -type f 2>/dev/null || echo "lambda.zip not found"
+        
     - name: Verify Lambda package
       run: |
         echo "Checking if Lambda package exists..."
