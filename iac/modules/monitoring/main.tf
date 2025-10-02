@@ -1,22 +1,6 @@
 # Monitoring Module - CloudWatch alarms and dashboards
 # This module creates monitoring and alerting for Lambda functions
 
-terraform {
-  required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = "~> 5.0"
-    }
-  }
-}
-
-# Local values
-locals {
-  common_tags = merge(var.tags, {
-    Module = "monitoring"
-  })
-}
-
 # CloudWatch Alarms
 resource "aws_cloudwatch_metric_alarm" "lambda_errors" {
   alarm_name          = "${var.function_name}-errors"

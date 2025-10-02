@@ -1,23 +1,6 @@
 # Lambda Module - Reusable Lambda function with API Gateway
 # This module creates a Lambda function with optional API Gateway integration
 
-terraform {
-  required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = "~> 5.0"
-    }
-  }
-}
-
-# Local values
-locals {
-  name_prefix = "${var.project_name}-${var.environment}-${var.service_name}"
-  common_tags = merge(var.tags, {
-    Module = "lambda"
-  })
-}
-
 # KMS key for encryption
 resource "aws_kms_key" "lambda_key" {
   count = var.enable_encryption ? 1 : 0

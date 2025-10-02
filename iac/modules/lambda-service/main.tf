@@ -1,27 +1,6 @@
 # Lambda Service Module - Main Configuration
 # This is the main module that can be called from different environments
 
-terraform {
-  required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = "~> 5.0"
-    }
-  }
-}
-
-# Local values
-locals {
-  name_prefix = "${var.project_name}-${var.environment}-${var.service_name}"
-  common_tags = merge(var.tags, {
-    Module = "lambda-service"
-  })
-}
-
-# Data sources
-data "aws_caller_identity" "current" {}
-data "aws_region" "current" {}
-
 # Dead Letter Queue
 resource "aws_sqs_queue" "dlq" {
   name                      = "${local.name_prefix}-dlq"
@@ -151,7 +130,7 @@ resource "aws_appautoscaling_target" "lambda_target" {
   
   max_capacity       = var.max_provisioned_concurrency
   min_capacity       = var.min_provisioned_concurrency
-  resource_id        = "function:${module.lambda.lambda_function_name}:${aws_lambda_provisioned_concurrency_config.main[0].provisioned_concurrency_config_name}"
+  resource_id        = "function:${module.lambda.lambda_function_name}:${module.lambda.lambda_function_version}"
   scalable_dimension = "lambda:function:provisioned-concurrency"
   service_namespace  = "lambda"
 }

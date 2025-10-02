@@ -97,8 +97,8 @@ output "provisioned_concurrency_config" {
   description = "Provisioned concurrency configuration"
   value = var.enable_provisioned_concurrency ? {
     function_name = aws_lambda_provisioned_concurrency_config.main[0].function_name
-    provisioned_concurrency_config_name = aws_lambda_provisioned_concurrency_config.main[0].provisioned_concurrency_config_name
-    provisioned_concurrency_count = aws_lambda_provisioned_concurrency_config.main[0].provisioned_concurrency_count
+    qualifier = aws_lambda_provisioned_concurrency_config.main[0].qualifier
+    provisioned_concurrent_executions = aws_lambda_provisioned_concurrency_config.main[0].provisioned_concurrent_executions
   } : null
 }
 
