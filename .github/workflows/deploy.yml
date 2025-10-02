@@ -489,6 +489,24 @@ jobs:
           exit 1
         fi
         
+    - name: Verify Lambda package before Terraform
+      run: |
+        echo "Verifying Lambda package exists before Terraform..."
+        echo "Current directory: $(pwd)"
+        echo "Contents of dist/:"
+        ls -la dist/ || echo "dist/ directory does not exist"
+        echo "Looking for lambda.zip:"
+        find . -name "lambda.zip" -type f 2>/dev/null || echo "lambda.zip not found"
+        echo "Checking from iac/environments/dev/ perspective:"
+        ls -la ../../dist/ || echo "../../dist/ does not exist"
+        if [ -f "dist/lambda.zip" ]; then
+          echo "✅ Lambda package verified: dist/lambda.zip"
+          ls -la dist/lambda.zip
+        else
+          echo "❌ Lambda package not found!"
+          exit 1
+        fi
+
     - name: Terraform Init
       run: |
         cd iac/environments/${{ github.event.inputs.environment || 'dev' }}
