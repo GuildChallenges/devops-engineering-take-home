@@ -29,6 +29,7 @@ def get_greeting_message() -> str:
         return message
     except Exception as e:
         logger.warning(f"SSM parameter not found, using fallback: {e}")
+        # Use environment variable fallback
         return os.getenv('GREETING_MESSAGE', 'Hello from Guild!')
 
 def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
@@ -38,6 +39,9 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     request_id = getattr(context, 'aws_request_id', 'local-test')
     
     logger.info(f"Processing request {request_id}")
+    logger.info(f"Event: {json.dumps(event)}")
+    logger.info(f"Environment variables: {dict(os.environ)}")
+    logger.info("Lambda function updated with null body handling")
     
     try:
         # Get configurable greeting message
@@ -45,10 +49,14 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         
         # Get optional name from event
         name = None
-        if 'body' in event:
+        if 'body' in event and event['body'] is not None:
             # API Gateway format
-            body = json.loads(event['body']) if isinstance(event['body'], str) else event['body']
-            name = body.get('name')
+            try:
+                body = json.loads(event['body']) if isinstance(event['body'], str) else event['body']
+                name = body.get('name') if body else None
+            except (json.JSONDecodeError, AttributeError) as e:
+                logger.warning(f"Failed to parse body: {e}")
+                name = None
         else:
             # Direct invocation format
             name = event.get('name')
@@ -92,4 +100,3 @@ if __name__ == "__main__":
     # Test direct invocation
     result = lambda_handler({'name': 'DevOps Engineer'}, MockContext())
     print(json.dumps(json.loads(result['body']), indent=2))
-
