@@ -40,11 +40,15 @@ The GitHub Actions workflow includes:
 
 ### AWS Credentials Setup
 
-**GitHub Secrets (Recommended):**
-- Add `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` to Repository Settings → Secrets
+**GitHub Secrets (Recommended for automatic deployment):**
+1. Go to Repository Settings → Secrets and variables → Actions
+2. Add these secrets:
+   - `AWS_ACCESS_KEY_ID`: Your AWS access key
+   - `AWS_SECRET_ACCESS_KEY`: Your AWS secret key
 
-**Manual Input:**
+**Manual Input (for manual deployment):**
 - Use workflow dispatch with credentials as inputs
+- Go to Actions → Deploy Lambda Service → Run workflow
 
 **IAM Role:**
 - Use OIDC authentication with AWS IAM roles
