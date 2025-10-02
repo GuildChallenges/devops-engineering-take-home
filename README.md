@@ -4,23 +4,37 @@ A production-ready deployment pattern for AWS Lambda with IaC, CI/CD, and operat
 
 ## Deployment Status
 
-**SUCCESSFULLY DEPLOYED**
+**SUCCESSFULLY DEPLOYED AND TESTED**
 
 - **Environment**: Development (`dev`)
 - **AWS Region**: `us-east-1`
-- **API Endpoint**: `https://ibk5vp56e4.execute-api.us-east-1.amazonaws.com/dev/hello`
+- **API Endpoint**: `https://{your-api-id}.execute-api.us-east-1.amazonaws.com/dev/hello`
+- **Lambda Function**: `guild-dev-hello-service-v2-function`
 - **Resources Created**: 24 AWS resources
-- **Status**: Ready for testing and production use
+- **Status**: Working and tested successfully
 
 ## Testing the Service
 
 ### API Endpoint Testing
 
-**Endpoint**: `https://ibk5vp56e4.execute-api.us-east-1.amazonaws.com/dev/hello`
+**Endpoint**: `https://{your-api-id}.execute-api.us-east-1.amazonaws.com/dev/hello`
 
 **Test with curl:**
 ```bash
-curl -X POST "https://ibk5vp56e4.execute-api.us-east-1.amazonaws.com/dev/hello" \
+curl -X POST "https://{your-api-id}.execute-api.us-east-1.amazonaws.com/dev/hello" \
+  -H "Content-Type: application/json" \
+  -d '{"name": "DevOps Engineer"}'
+```
+
+**Test without name:**
+```bash
+curl -X POST "https://{your-api-id}.execute-api.us-east-1.amazonaws.com/dev/hello" \
+  -H "Content-Type: application/json"
+```
+
+**Example with actual endpoint:**
+```bash
+curl -X POST "https://xm9pb9b9bl.execute-api.us-east-1.amazonaws.com/dev/hello" \
   -H "Content-Type: application/json" \
   -d '{"name": "DevOps Engineer"}'
 ```
@@ -35,12 +49,111 @@ curl -X POST "https://ibk5vp56e4.execute-api.us-east-1.amazonaws.com/dev/hello" 
 }
 ```
 
+**Response without name:**
+```json
+{
+  "message": "Hello from dev!",
+  "environment": "dev",
+  "version": "1.0.0",
+  "request_id": "abc123-def456"
+}
+```
+
+**Note**: This API only accepts POST requests. Browser testing will show "Missing Authentication Token" because browsers make GET requests by default. Use curl or a REST client for testing.
+
+### Monitoring and Logs
+
+- **CloudWatch Logs**: `/aws/lambda/guild-dev-hello-service-v2-function`
+- **AWS Console**: Lambda → Functions → `guild-dev-hello-service-v2-function`
+- **Response Time**: ~1 second (normal for cold start)
+- **HTTP Status**: 200 OK
+
+### Getting Your API Endpoint
+
+After deployment, you can get your API endpoint in several ways:
+
+**Option 1: From GitHub Actions Logs**
+1. Go to your repository's Actions tab
+2. Click on the latest deployment workflow
+3. Look for the "Run integration tests" step
+4. The API endpoint will be displayed in the logs
+
+**Option 2: From AWS Console**
+1. Go to AWS API Gateway console
+2. Find your API: `guild-dev-hello-service-v2-lambda-api`
+3. Click on "Stages" → "dev"
+4. Copy the "Invoke URL"
+
+**Option 3: From Terraform Output**
+```bash
+cd iac/environments/dev
+terraform output api_gateway_url
+```
+
+**Option 4: From AWS CLI**
+```bash
+aws apigateway get-rest-apis --query 'items[?name==`guild-dev-hello-service-v2-lambda-api`].id' --output text
+# Then use: https://{api-id}.execute-api.us-east-1.amazonaws.com/dev/hello
+```
+
 ### Monitoring & Observability
 
-- **CloudWatch Logs**: `/aws/lambda/guild-dev-hello-service-*`
+- **CloudWatch Logs**: `/aws/lambda/guild-dev-hello-service-v2-function`
 - **CloudWatch Dashboard**: Available in AWS Console
 - **X-Ray Tracing**: Enabled for request tracing
 - **Dead Letter Queue**: Configured for error handling
+
+## Quick Start - Deploy to Your AWS Account
+
+Anyone can deploy this to their own AWS account:
+
+### Prerequisites
+- AWS Account with appropriate permissions
+- GitHub repository (fork this repo)
+- AWS credentials (Access Key ID and Secret Access Key)
+
+### Deployment Steps
+
+1. **Fork this repository** to your GitHub account
+2. **Set up AWS credentials** in GitHub Secrets:
+   - Go to Repository Settings → Secrets and variables → Actions
+   - Add these secrets:
+     - `AWS_ACCESS_KEY_ID`: Your AWS access key
+     - `AWS_SECRET_ACCESS_KEY`: Your AWS secret key
+3. **Trigger deployment**:
+   - Push to `feat/ekene/interview/exercise` branch (development)
+   - Or push to `main` branch (production)
+   - Or use "Run workflow" button in Actions tab
+4. **Get your API endpoint** using the methods above
+5. **Test your deployment** with curl
+
+### Cleanup Infrastructure
+
+To destroy all created resources:
+
+1. **Go to Actions tab** in your repository
+2. **Click "Deploy Lambda Service"** workflow
+3. **Click "Run workflow"** button
+4. **Select "destroy"** as the action
+5. **Select environment** to destroy (dev/staging/prod)
+6. **Click "Run workflow"**
+7. **Manual approval required** - GitHub will ask for confirmation
+8. **Confirm destruction** - All AWS resources will be deleted
+
+**Warning**: This will permanently delete all infrastructure including:
+- Lambda function and API Gateway
+- IAM roles and policies  
+- CloudWatch logs and alarms
+- SQS dead letter queue
+- KMS keys and SSM parameters
+
+### Customization
+
+You can customize the deployment by:
+- **Changing project name**: Update `project_name` in workflow inputs
+- **Changing service name**: Update `service_name` in workflow inputs  
+- **Changing AWS region**: Update `aws_region` in workflow inputs
+- **Adding environments**: Extend the workflow for staging/production
 
 ## Development Workflow
 
