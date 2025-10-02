@@ -1,6 +1,11 @@
 # Lambda Module - Reusable Lambda function with API Gateway
 # This module creates a Lambda function with optional API Gateway integration
 
+# Random ID for unique resource names
+resource "random_id" "role_suffix" {
+  byte_length = 4
+}
+
 # KMS key for encryption
 resource "aws_kms_key" "lambda_key" {
   count = var.enable_encryption ? 1 : 0
@@ -69,7 +74,7 @@ resource "aws_kms_key_policy" "lambda_key_policy" {
 
 # IAM role for Lambda execution
 resource "aws_iam_role" "lambda_execution_role" {
-  name = "${local.name_prefix}-execution-role"
+  name = "${local.name_prefix}-execution-role-${random_id.role_suffix.hex}"
   
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -93,7 +98,7 @@ resource "aws_iam_role" "lambda_execution_role" {
 
 # IAM policy for Lambda execution
 resource "aws_iam_policy" "lambda_execution_policy" {
-  name        = "${local.name_prefix}-execution-policy"
+  name        = "${local.name_prefix}-execution-policy-${random_id.role_suffix.hex}"
   description = "Policy for ${local.name_prefix} Lambda function"
   
   lifecycle {
@@ -132,7 +137,7 @@ resource "aws_iam_role_policy_attachment" "lambda_basic_execution" {
 
 # CloudWatch Log Group
 resource "aws_cloudwatch_log_group" "lambda_logs" {
-  name              = "/aws/lambda/${local.name_prefix}"
+  name              = "/aws/lambda/${local.name_prefix}-${random_id.role_suffix.hex}"
   retention_in_days = var.log_retention_days
   # Temporarily disable KMS encryption to resolve deployment issues
   # kms_key_id        = var.enable_encryption ? aws_kms_key.lambda_key[0].arn : null
@@ -140,12 +145,16 @@ resource "aws_cloudwatch_log_group" "lambda_logs" {
   tags = merge(local.common_tags, {
     Name = "${local.name_prefix}-logs"
   })
+  
+  lifecycle {
+    ignore_changes = [name]
+  }
 }
 
 # Lambda function
 resource "aws_lambda_function" "main" {
   filename         = var.lambda_package_path
-  function_name    = local.name_prefix
+  function_name    = "${local.name_prefix}-${random_id.role_suffix.hex}"
   role            = aws_iam_role.lambda_execution_role.arn
   handler         = var.lambda_handler
   runtime         = var.lambda_runtime
