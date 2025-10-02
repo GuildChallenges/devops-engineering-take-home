@@ -27,6 +27,10 @@ resource "aws_ssm_parameter" "parameters" {
   
   description = each.value.description
   
+  lifecycle {
+    ignore_changes = [name]
+  }
+  
   tags = merge(local.common_tags, each.value.tags)
 }
 

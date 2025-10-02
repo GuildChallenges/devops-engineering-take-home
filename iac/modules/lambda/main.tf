@@ -19,6 +19,10 @@ resource "aws_kms_alias" "lambda_key_alias" {
   
   name          = "alias/${local.name_prefix}-key"
   target_key_id = aws_kms_key.lambda_key[0].key_id
+  
+  lifecycle {
+    ignore_changes = [name]
+  }
 }
 
 # KMS key policy to allow CloudWatch Logs to use the key

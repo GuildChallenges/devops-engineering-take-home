@@ -10,6 +10,10 @@ resource "aws_sqs_queue" "dlq" {
   tags = merge(local.common_tags, {
     Name = "${local.name_prefix}-dlq"
   })
+  
+  lifecycle {
+    ignore_changes = [name, kms_master_key_id]
+  }
 }
 
 # KMS key for DLQ encryption
