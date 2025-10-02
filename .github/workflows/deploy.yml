@@ -205,7 +205,6 @@ jobs:
         fi
         
     - name: Configure AWS credentials
-      if: secrets.AWS_ACCESS_KEY_ID != '' || github.event.inputs.aws_access_key_id != ''
       uses: aws-actions/configure-aws-credentials@v4
       with:
         aws-access-key-id: ${{ github.event.inputs.aws_access_key_id || secrets.AWS_ACCESS_KEY_ID }}
