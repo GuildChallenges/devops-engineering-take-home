@@ -27,6 +27,9 @@ resource "aws_ssm_parameter" "parameters" {
   
   description = each.value.description
   
+  # Allow overwriting existing parameters
+  overwrite = true
+  
   lifecycle {
     ignore_changes = [name]
   }

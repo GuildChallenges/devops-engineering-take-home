@@ -22,7 +22,7 @@ resource "aws_kms_key" "lambda_key" {
 resource "aws_kms_alias" "lambda_key_alias" {
   count = var.enable_encryption ? 1 : 0
   
-  name          = "alias/${local.name_prefix}-key"
+  name          = "alias/${local.name_prefix}-key-${random_id.role_suffix.hex}"
   target_key_id = aws_kms_key.lambda_key[0].key_id
   
   lifecycle {
