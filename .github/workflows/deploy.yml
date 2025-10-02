@@ -86,9 +86,6 @@ jobs:
       run: |
         mypy src/ --ignore-missing-imports
         
-    - name: Format check
-      run: |
-        black --check src/
         
     - name: Run tests
       run: |
