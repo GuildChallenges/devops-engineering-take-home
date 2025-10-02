@@ -19,7 +19,7 @@ resource "aws_kms_key" "lambda_key" {
 resource "aws_kms_alias" "lambda_key_alias" {
   count = var.enable_encryption ? 1 : 0
   
-  name          = "alias/${local.name_prefix}-encryption-key"
+  name          = "alias/${local.name_prefix}-lambda-encryption-key"
   target_key_id = aws_kms_key.lambda_key[0].key_id
   
   lifecycle {
@@ -71,7 +71,7 @@ resource "aws_kms_key_policy" "lambda_key_policy" {
 
 # IAM role for Lambda execution
 resource "aws_iam_role" "lambda_execution_role" {
-  name = "${local.name_prefix}-execution-role"
+  name = "${local.name_prefix}-lambda-execution-role"
   
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -95,7 +95,7 @@ resource "aws_iam_role" "lambda_execution_role" {
 
 # IAM policy for Lambda execution
 resource "aws_iam_policy" "lambda_execution_policy" {
-  name        = "${local.name_prefix}-execution-policy"
+  name        = "${local.name_prefix}-lambda-execution-policy"
   description = "Policy for ${local.name_prefix} Lambda function"
   
   lifecycle {
