@@ -21,6 +21,48 @@ resource "aws_kms_alias" "lambda_key_alias" {
   target_key_id = aws_kms_key.lambda_key[0].key_id
 }
 
+# KMS key policy to allow CloudWatch Logs to use the key
+resource "aws_kms_key_policy" "lambda_key_policy" {
+  count = var.enable_encryption ? 1 : 0
+  
+  key_id = aws_kms_key.lambda_key[0].id
+  
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid    = "Enable IAM User Permissions"
+        Effect = "Allow"
+        Principal = {
+          AWS = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"
+        }
+        Action   = "kms:*"
+        Resource = "*"
+      },
+      {
+        Sid    = "Allow CloudWatch Logs"
+        Effect = "Allow"
+        Principal = {
+          Service = "logs.${data.aws_region.current.name}.amazonaws.com"
+        }
+        Action = [
+          "kms:Encrypt",
+          "kms:Decrypt",
+          "kms:ReEncrypt*",
+          "kms:GenerateDataKey*",
+          "kms:DescribeKey"
+        ]
+        Resource = "*"
+        Condition = {
+          ArnEquals = {
+            "kms:EncryptionContext:aws:logs:arn" = "arn:aws:logs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:log-group:/aws/lambda/${local.name_prefix}"
+          }
+        }
+      }
+    ]
+  })
+}
+
 # IAM role for Lambda execution
 resource "aws_iam_role" "lambda_execution_role" {
   name = "${local.name_prefix}-execution-role"
