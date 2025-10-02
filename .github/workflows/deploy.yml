@@ -19,7 +19,7 @@ on:
       aws_region:
         description: 'AWS Region'
         required: false
-        default: 'us-west-2'
+        default: 'us-east-1'
         type: string
       project_name:
         description: 'Project Name'
@@ -227,7 +227,7 @@ jobs:
       with:
         aws-access-key-id: ${{ github.event.inputs.aws_access_key_id || secrets.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ github.event.inputs.aws_secret_access_key || secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: ${{ github.event.inputs.aws_region || 'us-west-2' }}
+        aws-region: ${{ github.event.inputs.aws_region || 'us-east-1' }}
         role-to-assume: ${{ github.event.inputs.use_aws_role == 'true' && github.event.inputs.aws_role_arn || '' }}
         
     - name: Verify AWS credentials
@@ -258,7 +258,7 @@ jobs:
         }
         
         provider "aws" {
-          region = "${{ github.event.inputs.aws_region || 'us-west-2' }}"
+          region = "${{ github.event.inputs.aws_region || 'us-east-1' }}"
           
           default_tags {
             tags = {
@@ -381,7 +381,7 @@ jobs:
     - name: Run integration tests
       run: |
         # Get the API Gateway URL from Terraform output
-        API_URL=$(cd iac/environments/${{ github.event.inputs.environment || 'dev' }} && terraform output -raw api_gateway_url)
+        API_URL=$(cd iac && terraform output -raw api_gateway_url)
         if [ "$API_URL" != "null" ]; then
           echo "Testing API endpoint: $API_URL"
           curl -X POST "$API_URL" \

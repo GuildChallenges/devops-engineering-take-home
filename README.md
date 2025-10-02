@@ -46,6 +46,12 @@ The GitHub Actions workflow includes:
    - `AWS_ACCESS_KEY_ID`: Your AWS access key
    - `AWS_SECRET_ACCESS_KEY`: Your AWS secret key
 
+**Default Configuration:**
+- **AWS Region**: `us-east-1`
+- **Environment**: `dev`
+- **Project**: `guild`
+- **Service**: `hello-service`
+
 **Manual Input (for manual deployment):**
 - Use workflow dispatch with credentials as inputs
 - Go to Actions → Deploy Lambda Service → Run workflow
