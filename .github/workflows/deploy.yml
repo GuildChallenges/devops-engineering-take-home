@@ -186,7 +186,7 @@ jobs:
         
     - name: Display deployment inputs
       run: |
-        echo "🚀 Deployment Configuration:"
+        echo " Deployment Configuration:"
         echo "Environment: ${{ github.event.inputs.environment || 'dev' }}"
         echo "AWS Region: ${{ github.event.inputs.aws_region || 'us-west-2' }}"
         echo "Project Name: ${{ github.event.inputs.project_name || 'guild' }}"
@@ -198,25 +198,25 @@ jobs:
         
     - name: Check AWS credentials
       run: |
-        echo "🔍 Checking AWS credentials..."
+        echo "Checking AWS credentials..."
         
         # For manual triggers, check inputs first
         if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
           if [ -n "${{ github.event.inputs.aws_access_key_id }}" ] && [ -n "${{ github.event.inputs.aws_secret_access_key }}" ]; then
-            echo "✅ Using credentials from workflow inputs (manual trigger)"
+            echo "Using credentials from workflow inputs (manual trigger)"
           elif [ -n "${{ secrets.AWS_ACCESS_KEY_ID }}" ] && [ -n "${{ secrets.AWS_SECRET_ACCESS_KEY }}" ]; then
-            echo "✅ Using credentials from GitHub Secrets (manual trigger)"
+            echo "Using credentials from GitHub Secrets (manual trigger)"
           else
-            echo "❌ No AWS credentials found for manual trigger!"
+            echo "No AWS credentials found for manual trigger!"
             echo "Please provide AWS credentials in the workflow inputs or set GitHub Secrets"
             exit 1
           fi
         else
           # For automatic triggers, use secrets
           if [ -n "${{ secrets.AWS_ACCESS_KEY_ID }}" ] && [ -n "${{ secrets.AWS_SECRET_ACCESS_KEY }}" ]; then
-            echo "✅ Using credentials from GitHub Secrets (automatic trigger)"
+            echo "Using credentials from GitHub Secrets (automatic trigger)"
           else
-            echo "❌ No AWS credentials found in GitHub Secrets!"
+            echo "No AWS credentials found in GitHub Secrets!"
             echo "Please set AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY in repository secrets"
             exit 1
           fi
@@ -234,7 +234,7 @@ jobs:
       run: |
         echo "Verifying AWS credentials..."
         aws sts get-caller-identity
-        echo "✅ AWS credentials verified successfully"
+        echo "AWS credentials verified successfully"
         
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v3
@@ -400,10 +400,10 @@ jobs:
     - name: Notify Success
       if: ${{ needs.deploy.result == 'success' }}
       run: |
-        echo "✅ Deployment completed successfully!"
+        echo "Deployment completed successfully!"
         
     - name: Notify Failure
       if: ${{ needs.deploy.result == 'failure' }}
       run: |
-        echo "❌ Deployment failed!"
+        echo "Deployment failed!"
         exit 1
