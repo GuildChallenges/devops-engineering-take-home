@@ -587,6 +587,12 @@ jobs:
           -backend-config="dynamodb_table=${{ secrets.TERRAFORM_STATE_DYNAMODB_TABLE || 'terraform-state-lock' }}" \
           -backend-config="encrypt=true"
         
+        # Debug: Check if state file exists in S3
+        echo "Checking S3 bucket contents..."
+        aws s3 ls s3://$BUCKET_NAME/ --recursive || echo "Bucket not accessible or empty"
+        echo "Checking for state file..."
+        aws s3 ls s3://$BUCKET_NAME/lambda-service/${{ github.event.inputs.environment || 'dev' }}/ || echo "State file not found"
+        
     - name: Terraform Plan
       run: |
         cd iac/environments/${{ github.event.inputs.environment || 'dev' }}
